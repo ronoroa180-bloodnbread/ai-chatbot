@@ -4,27 +4,26 @@ from transformers import pipeline
 st.set_page_config(page_title="AI Chatbot")
 
 st.title("🤖 AI Chatbot")
-st.write("Ask me anything!")
+st.write("Ask factual questions like capitals, definitions, etc.")
 
-# Keep model in session so it loads only once
-if "chatbot" not in st.session_state:
-    st.session_state.chatbot = None
+# Load QA model once
+if "qa" not in st.session_state:
+    with st.spinner("Loading AI model..."):
+        st.session_state.qa = pipeline(
+            "question-answering",
+            model="distilbert-base-cased-distilled-squad"
+        )
 
-if st.session_state.chatbot is None:
-    if st.button("Load AI Model"):
-        with st.spinner("Loading AI model (first time takes ~1 minute)..."):
-            st.session_state.chatbot = pipeline(
-                "text-generation",
-                model="distilgpt2"
-            )
-else:
-    user_input = st.text_input("You:")
+question = st.text_input("Your question:")
 
-    if user_input:
-        with st.spinner("Thinking..."):
-            response = st.session_state.chatbot(
-                user_input,
-                max_length=80,
-                num_return_sequences=1
-            )
-            st.write("Bot:", response[0]["generated_text"])
+context = """
+India is a country in South Asia. Its capital city is New Delhi.
+The Prime Minister of India resides in New Delhi.
+"""
+
+if question:
+    answer = st.session_state.qa(
+        question=question,
+        context=context
+    )
+    st.success(f"Answer: {answer['answer']}")
